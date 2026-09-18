@@ -14,14 +14,15 @@ const demoProducts = [
 ];
 
 function normalizeProduct(product) {
-  const rawStock = product.stock ?? product.quantity ?? product.inventory ?? product.qty;
+  const rawStock = product && (product.stock ?? product.quantity ?? product.inventory ?? product.qty ?? 0);
   const numericStock = Number(rawStock);
+
   return {
     ...product,
-    category: product.category || product.cat || 'أخرى',
-    oldPrice: product.oldPrice ?? product.old ?? 0,
+    category: product?.category || product?.cat || 'أخرى',
+    oldPrice: product?.oldPrice ?? product?.old ?? 0,
     stock: Number.isFinite(numericStock) ? Math.max(0, Math.floor(numericStock)) : 0,
-    image: product.image || fallbackImage
+    image: product?.image || fallbackImage
   };
 }
 
@@ -46,12 +47,16 @@ function getCart() {
 
     return cart
       .map(item => {
-        if (typeof item === 'number') return { id: Number(item), qty: 1 };
+        if (typeof item === 'number') {
+          return { id: Number(item), qty: 1 };
+        }
+
         if (item && typeof item === 'object') {
           const id = Number(item.id);
           const qty = Number(item.qty || 1);
           return Number.isFinite(id) ? { id, qty: qty > 0 ? qty : 1 } : null;
         }
+
         return null;
       })
       .filter(Boolean);
