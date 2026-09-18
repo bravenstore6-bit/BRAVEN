@@ -1,5 +1,6 @@
 const fallbackImage = 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=900&q=80';
 const STORAGE_KEY = 'braven_products';
+const CART_KEY = 'braven_cart';
 
 const demoProducts = [
   { id: 1, name: 'تيشيرت Dream Big', category: 'رجالي', price: 299, oldPrice: 349, stock: 10, dark: true, image: fallbackImage },
@@ -37,15 +38,56 @@ function saveProducts(products) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(products.map(normalizeProduct)));
 }
 
-let cart = JSON.parse(localStorage.getItem('braven_cart') || '[]');
+function getCart() {
+  try {
+    const cart = JSON.parse(localStorage.getItem(CART_KEY) || '[]');
+    if (!Array.isArray(cart)) return [];
+
+    return cart
+      .map(item => {
+        if (typeof item === 'number') {
+          return { id: Number(item), qty: 1 };
+        }
+
+        if (item && typeof item === 'object') {
+          const id = Number(item.id);
+          const qty = Number(item.qty || 1);
+          return Number.isFinite(id) ? { id, qty: qty > 0 ? qty : 1 } : null;
+        }
+
+        return null;
+      })
+      .filter(Boolean);
+  } catch (error) {
+    return [];
+  }
+}
+
+function saveCart(cart) {
+  localStorage.setItem(CART_KEY, JSON.stringify(cart));
+}
+
 const grid = document.getElementById('productGrid');
+
+function updateCount() {
+  const count = document.getElementById('cartCount');
+  if (!count) return;
+  const total = getCart().reduce((sum, item) => sum + Number(item.qty || 0), 0);
+  count.textContent = total;
+}
 
 function render(list = getProducts()) {
   if (!grid) return;
 
   const products = Array.isArray(list) ? list.map(normalizeProduct) : getProducts();
+  const cart = getCart();
+
   grid.innerHTML = products.map(product => {
     const available = product.stock > 0;
+    const current = cart.find(item => Number(item.id) === Number(product.id));
+    const currentQty = current ? Number(current.qty || 0) : 0;
+    const disabled = !available || currentQty >= product.stock;
+
     return `
       <article class="card">
         <div class="pic ${product.dark ? 'dark' : ''}">
@@ -61,8 +103,8 @@ function render(list = getProducts()) {
           <small style="display:block;margin:8px 0;color:${available ? '#28764d' : '#b5483a'};font-weight:700">
             ${available ? `متوفر (${product.stock} قطعة)` : 'غير متوفر'}
           </small>
-          <button class="add-cart" data-id="${product.id}" ${available ? '' : 'disabled'}>
-            ${available ? 'أضف إلى السلة' : 'نفد المخزون'}
+          <button class="add-cart" data-id="${product.id}" ${disabled ? 'disabled' : ''}>
+            ${disabled ? (available ? 'وصلت للحد' : 'نفد المخزون') : 'أضف إلى السلة'}
           </button>
         </div>
       </article>
@@ -70,11 +112,6 @@ function render(list = getProducts()) {
   }).join('');
 
   bindAddButtons();
-}
-
-function updateCount() {
-  const count = document.getElementById('cartCount');
-  if (count) count.textContent = cart.length;
 }
 
 function addToCart(id) {
@@ -87,13 +124,25 @@ function addToCart(id) {
     return;
   }
 
-  product.stock -= 1;
-  cart.push(Number(id));
-  saveProducts(products);
-  localStorage.setItem('braven_cart', JSON.stringify(cart));
+  const cart = getCart();
+  const current = cart.find(item => Number(item.id) === Number(id));
+  const currentQty = current ? Number(current.qty || 0) : 0;
+
+  if (currentQty >= product.stock) {
+    alert('وصلت إلى الحد الأقصى للمخزون لهذا المنتج');
+    return;
+  }
+
+  if (current) {
+    current.qty = currentQty + 1;
+  } else {
+    cart.push({ id: Number(id), qty: 1 });
+  }
+
+  saveCart(cart);
   updateCount();
   render(products);
-  alert('تمت إضافة المنتج إلى السلة وتم تحديث المخزون');
+  alert('تمت إضافة المنتج إلى السلة');
 }
 
 function bindAddButtons() {
@@ -114,8 +163,13 @@ function handleCategoryFilter() {
       const filter = button.dataset.filter;
       const all = getProducts();
       let filtered = all;
-      if (filter === 'خصومات') filtered = all.filter(product => product.oldPrice > 0);
-      else if (filter !== 'كل') filtered = all.filter(product => product.category === filter);
+
+      if (filter === 'خصومات') {
+        filtered = all.filter(product => Number(product.oldPrice) > 0);
+      } else if (filter !== 'كل') {
+        filtered = all.filter(product => product.category === filter);
+      }
+
       setActiveCategory(button);
       render(filtered);
     };
@@ -127,7 +181,9 @@ function syncProductsFromAdmin() {
   updateCount();
 }
 
-handleCategoryFilter();
-render();
-updateCount();
-window.bravenSync = syncProductsFromAdmin;
+if (typeof document !== 'undefined') {
+  handleCategoryFilter();
+  render();
+  updateCount();
+  window.bravenSync = syncProductsFromAdmin;
+}
