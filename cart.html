@@ -124,7 +124,8 @@
 
     function getProducts() {
       try {
-        return JSON.parse(localStorage.getItem(PRODUCTS_KEY) || '[]');
+        const products = JSON.parse(localStorage.getItem(PRODUCTS_KEY) || '[]');
+        return Array.isArray(products) ? products : [];
       } catch (error) {
         return [];
       }
@@ -137,7 +138,19 @@
     function getCart() {
       try {
         const cart = JSON.parse(localStorage.getItem(CART_KEY) || '[]');
-        return Array.isArray(cart) ? cart : [];
+        if (!Array.isArray(cart)) return [];
+
+        return cart
+          .map(item => {
+            if (typeof item === 'number') return { id: Number(item), qty: 1 };
+            if (item && typeof item === 'object') {
+              const id = Number(item.id);
+              const qty = Number(item.qty || 1);
+              return Number.isFinite(id) ? { id, qty: qty > 0 ? qty : 1 } : null;
+            }
+            return null;
+          })
+          .filter(Boolean);
       } catch (error) {
         return [];
       }
@@ -159,6 +172,7 @@
       }
 
       let total = 0;
+
       list.innerHTML = cart.map(item => {
         const product = products.find(p => Number(p.id) === Number(item.id));
         if (!product) return '';
@@ -188,12 +202,15 @@
       }).join('');
 
       document.getElementById('totalPrice').textContent = total + ' ج.م';
+
       document.querySelectorAll('[data-action="plus"]').forEach(button => {
         button.onclick = () => updateQty(Number(button.dataset.id), 1);
       });
+
       document.querySelectorAll('[data-action="minus"]').forEach(button => {
         button.onclick = () => updateQty(Number(button.dataset.id), -1);
       });
+
       document.querySelectorAll('[data-action="remove"]').forEach(button => {
         button.onclick = () => removeFromCart(Number(button.dataset.id));
       });
@@ -207,6 +224,7 @@
       if (!product || !current) return;
 
       const nextQty = Number(current.qty || 1) + delta;
+
       if (nextQty <= 0) {
         removeFromCart(id);
         return;
@@ -220,14 +238,20 @@
       current.qty = nextQty;
       saveCart(cart);
       renderCart();
-      if (window.bravenSync) window.bravenSync();
+
+      if (window.bravenSync) {
+        window.bravenSync();
+      }
     }
 
     function removeFromCart(id) {
       const cart = getCart().filter(item => Number(item.id) !== Number(id));
       saveCart(cart);
       renderCart();
-      if (window.bravenSync) window.bravenSync();
+
+      if (window.bravenSync) {
+        window.bravenSync();
+      }
     }
 
     document.getElementById('checkoutBtn').addEventListener('click', function () {
@@ -242,7 +266,7 @@
       let ok = true;
       cart.forEach(item => {
         const product = products.find(p => Number(p.id) === Number(item.id));
-        if (!product || Number(product.stock) < Number(item.qty)) {
+        if (!product || Number(product.stock) < Number(item.qty || 0)) {
           ok = false;
         }
       });
@@ -254,18 +278,26 @@
 
       cart.forEach(item => {
         const product = products.find(p => Number(p.id) === Number(item.id));
-        if (product) product.stock = Number(product.stock) - Number(item.qty || 0);
+        if (product) {
+          product.stock = Number(product.stock) - Number(item.qty || 0);
+        }
       });
 
       saveProducts(products);
       saveCart([]);
       renderCart();
-      if (window.bravenSync) window.bravenSync();
+
+      if (window.bravenSync) {
+        window.bravenSync();
+      }
+
       alert('تمت عملية الشراء بنجاح');
     });
 
     renderCart();
-    if (window.bravenSync) window.bravenSync();
+    if (window.bravenSync) {
+      window.bravenSync();
+    }
   </script>
 </body>
 </html>
