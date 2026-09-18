@@ -67,14 +67,15 @@ function saveCart(cart) {
   localStorage.setItem(CART_KEY, JSON.stringify(cart));
 }
 
-const grid = document.getElementById('productGrid');
-
 function updateCount() {
   const count = document.getElementById('cartCount');
   if (!count) return;
+
   const total = getCart().reduce((sum, item) => sum + Number(item.qty || 0), 0);
   count.textContent = total;
 }
+
+const grid = document.getElementById('productGrid');
 
 function render(list = getProducts()) {
   if (!grid) return;
@@ -158,7 +159,10 @@ function setActiveCategory(button) {
 }
 
 function handleCategoryFilter() {
-  document.querySelectorAll('.categories button').forEach(button => {
+  const buttons = document.querySelectorAll('.categories button');
+  if (!buttons.length) return;
+
+  buttons.forEach(button => {
     button.onclick = () => {
       const filter = button.dataset.filter;
       const all = getProducts();
