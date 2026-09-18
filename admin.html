@@ -1,406 +1,44 @@
 <!doctype html>
 <html lang="ar" dir="rtl">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>لوحة الإدارة | BRAVEN</title>
-    <style>
-      :root {
-        --bg: #f5f1ea;
-        --panel: #ffffff;
-        --soft: #f0ede9;
-        --line: #ddd3c8;
-        --text: #171512;
-        --muted: #716b63;
-        --accent: #111111;
-        --accent-2: #d8ff57;
-        --danger: #b64a3d;
-        --success: #2e7d5d;
-      }
-
-      * { box-sizing: border-box; }
-      html { scroll-behavior: smooth; }
-      body {
-        margin: 0;
-        font-family: Arial, Tahoma, sans-serif;
-        background: var(--bg);
-        color: var(--text);
-      }
-
-      .topbar {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 18px 28px;
-        background: rgba(255,255,255,0.7);
-        border-bottom: 1px solid var(--line);
-        backdrop-filter: blur(10px);
-        position: sticky;
-        top: 0;
-        z-index: 10;
-      }
-
-      .brand {
-        font-weight: 900;
-        letter-spacing: 1px;
-        font-size: 1.4rem;
-      }
-
-      .actions {
-        display: flex;
-        gap: 12px;
-        align-items: center;
-      }
-
-      .btn {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        border: 1px solid var(--line);
-        background: var(--panel);
-        color: var(--text);
-        text-decoration: none;
-        padding: 10px 16px;
-        border-radius: 12px;
-        font-weight: 700;
-        cursor: pointer;
-      }
-
-      .btn.primary {
-        background: var(--accent);
-        color: #fff;
-        border-color: var(--accent);
-      }
-
-      .btn.warn {
-        background: #fff2f0;
-        border-color: #f0d2ce;
-        color: var(--danger);
-      }
-
-      .wrap {
-        max-width: 1200px;
-        margin: 32px auto;
-        padding: 0 20px 60px;
-      }
-
-      .grid {
-        display: grid;
-        grid-template-columns: 420px 1fr;
-        gap: 24px;
-      }
-
-      .panel {
-        background: var(--panel);
-        border: 1px solid var(--line);
-        border-radius: 18px;
-        padding: 22px;
-        box-shadow: 0 8px 20px rgba(0,0,0,0.02);
-      }
-
-      .panel h2 {
-        margin: 0 0 18px;
-        font-size: 1.6rem;
-      }
-
-      label {
-        display: block;
-        font-weight: 700;
-        margin-bottom: 8px;
-        font-size: 0.95rem;
-      }
-
-      input, select {
-        width: 100%;
-        margin-bottom: 16px;
-        padding: 12px 14px;
-        border-radius: 10px;
-        border: 1px solid var(--line);
-        background: #faf8f5;
-        color: var(--text);
-        font-size: 1rem;
-      }
-
-      .inline {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 12px;
-      }
-
-      .product-list {
-        display: grid;
-        gap: 14px;
-      }
-
-      .product-item {
-        display: grid;
-        grid-template-columns: 110px 1fr auto;
-        gap: 14px;
-        align-items: center;
-        background: var(--soft);
-        border: 1px solid var(--line);
-        border-radius: 14px;
-        padding: 12px;
-      }
-
-      .thumb {
-        width: 110px;
-        height: 110px;
-        border-radius: 12px;
-        background: linear-gradient(135deg, #d7d4d0, #f6f2ec);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        overflow: hidden;
-      }
-
-      .thumb img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-      }
-
-      .meta h3 {
-        margin: 0 0 6px;
-        font-size: 1.1rem;
-      }
-
-      .meta p {
-        margin: 0;
-        color: var(--muted);
-        font-size: 0.9rem;
-      }
-
-      .meta .price {
-        display: inline-block;
-        margin-top: 10px;
-        font-weight: 800;
-      }
-
-      .actions-box {
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-      }
-
-      .empty {
-        padding: 26px;
-        border: 1px dashed var(--line);
-        border-radius: 14px;
-        background: #faf8f5;
-        color: var(--muted);
-        text-align: center;
-      }
-
-      @media (max-width: 900px) {
-        .grid { grid-template-columns: 1fr; }
-      }
-    </style>
-  </head>
-  <body>
-    <header class="topbar">
-      <div class="brand">BRAVEN</div>
-      <div class="actions">
-        <a class="btn" href="index.html">الواجهة الرئيسية</a>
-        <button class="btn primary" id="resetDemo">إعادة البيانات التجريبية</button>
-      </div>
-    </header>
-
-    <main class="wrap">
-      <div class="grid">
-        <section class="panel">
-          <h2>إضافة أو تعديل منتج</h2>
-          <form id="productForm">
-            <input type="hidden" id="productId" />
-
-            <label>اسم المنتج</label>
-            <input id="name" placeholder="مثال: تيشيرت Dream Big" required />
-
-            <label>الفئة</label>
-            <select id="category">
-              <option value="رجالي">رجالي</option>
-              <option value="نسائي">نسائي</option>
-              <option value="أطفال">أطفال</option>
-              <option value="تصاميم">تصاميم</option>
-              <option value="كاجوال">كاجوال</option>
-              <option value="هوديز">هوديز</option>
-              <option value="إكسسوارات">إكسسوارات</option>
-            </select>
-
-            <div class="inline">
-              <div>
-                <label>السعر</label>
-                <input id="price" type="number" min="1" required />
-              </div>
-              <div>
-                <label>السعر القديم</label>
-                <input id="oldPrice" type="number" min="0" value="0" />
-              </div>
-            </div>
-
-            <label>رابط الصورة</label>
-            <input id="image" type="url" placeholder="https://..." required />
-
-            <div class="inline">
-              <button type="submit" class="btn primary">حفظ المنتج</button>
-              <button type="button" class="btn" id="clearForm">مسح</button>
-            </div>
-          </form>
-        </section>
-
-        <section class="panel">
-          <h2>قائمة المنتجات</h2>
-          <div id="productList" class="product-list"></div>
-        </section>
-      </div>
-    </main>
-
-    <script>
-      const STORAGE_KEY = 'braven_products';
-      const demoProducts = [
-        { id: 1, name: 'تيشيرت Dream Big', category: 'رجالي', price: 299, oldPrice: 349, image: 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=900&q=80' },
-        { id: 2, name: 'تيشيرت Samurai', category: 'تصاميم', price: 279, oldPrice: 0, image: 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=900&q=80' },
-        { id: 3, name: 'تيشيرت Adventure', category: 'كاجوال', price: 319, oldPrice: 0, image: 'https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=900&q=80' },
-        { id: 4, name: 'تيشيرت Good Vibes', category: 'رجالي', price: 299, oldPrice: 349, image: 'https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?auto=format&fit=crop&w=900&q=80' },
-        { id: 5, name: 'تيشيرت Anime', category: 'تصاميم', price: 289, oldPrice: 0, image: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=900&q=80' },
-        { id: 6, name: 'تيشيرت Butterfly', category: 'نسائي', price: 279, oldPrice: 0, image: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=900&q=80' },
-        { id: 7, name: 'تيشيرت Kids', category: 'أطفال', price: 229, oldPrice: 0, image: 'https://images.unsplash.com/photo-1519345182560-3f2917c472ef?auto=format&fit=crop&w=900&q=80' },
-        { id: 8, name: 'هودي Street', category: 'هوديز', price: 449, oldPrice: 499, image: 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=900&q=80' }
-      ];
-
-      const form = document.getElementById('productForm');
-      const list = document.getElementById('productList');
-      const productId = document.getElementById('productId');
-      const nameInput = document.getElementById('name');
-      const categoryInput = document.getElementById('category');
-      const priceInput = document.getElementById('price');
-      const oldPriceInput = document.getElementById('oldPrice');
-      const imageInput = document.getElementById('image');
-
-      function readProducts() {
-        try {
-          const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
-          if (Array.isArray(saved) && saved.length) return saved;
-        } catch (e) {}
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(demoProducts));
-        return demoProducts;
-      }
-
-      function saveProducts(products) {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(products));
-      }
-
-      function renderProducts() {
-        const products = readProducts();
-        if (!products.length) {
-          list.innerHTML = '<div class="empty">لا توجد منتجات بعد.</div>';
-          return;
-        }
-
-        list.innerHTML = products.map(product => `
-          <article class="product-item">
-            <div class="thumb">
-              <img src="${product.image || 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=900&q=80'}" alt="${product.name}" />
-            </div>
-            <div class="meta">
-              <h3>${product.name}</h3>
-              <p>الفئة: ${product.category}</p>
-              <span class="price">${product.price} ج.م</span>
-              ${product.oldPrice ? `<p>السعر القديم: ${product.oldPrice} ج.م</p>` : ''}
-            </div>
-            <div class="actions-box">
-              <button class="btn" data-action="edit" data-id="${product.id}">تعديل</button>
-              <button class="btn warn" data-action="delete" data-id="${product.id}">حذف</button>
-            </div>
-          </article>
-        `).join('');
-      }
-
-      function clearForm() {
-        productId.value = '';
-        nameInput.value = '';
-        categoryInput.value = 'رجالي';
-        priceInput.value = '';
-        oldPriceInput.value = '0';
-        imageInput.value = '';
-        nameInput.focus();
-      }
-
-      function fillForm(product) {
-        productId.value = product.id;
-        nameInput.value = product.name;
-        categoryInput.value = product.category;
-        priceInput.value = product.price;
-        oldPriceInput.value = product.oldPrice || 0;
-        imageInput.value = product.image;
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      }
-
-      form.addEventListener('submit', function (e) {
-        e.preventDefault();
-
-        const products = readProducts();
-        const product = {
-          id: Number(productId.value) || Date.now(),
-          name: nameInput.value.trim(),
-          category: categoryInput.value,
-          price: Number(priceInput.value),
-          oldPrice: Number(oldPriceInput.value) || 0,
-          image: imageInput.value.trim()
-        };
-
-        if (!product.name || !product.image || !product.price) {
-          alert('من فضلك أكمل جميع الحقول المطلوبة');
-          return;
-        }
-
-        const exists = products.findIndex(item => item.id === product.id);
-        if (exists >= 0) {
-          products[exists] = product;
-        } else {
-          products.push(product);
-        }
-
-        saveProducts(products);
-        renderProducts();
-        clearForm();
-      });
-
-      document.getElementById('clearForm').addEventListener('click', clearForm);
-
-      list.addEventListener('click', function (e) {
-        const target = e.target.closest('button');
-        if (!target) return;
-
-        const products = readProducts();
-        const productIdValue = Number(target.dataset.id);
-        const product = products.find(item => item.id === productIdValue);
-
-        if (!product) return;
-
-        if (target.dataset.action === 'edit') {
-          fillForm(product);
-        }
-
-        if (target.dataset.action === 'delete') {
-          const confirmed = confirm('هل تريد حذف هذا المنتج؟');
-          if (!confirmed) return;
-          const updated = products.filter(item => item.id !== productIdValue);
-          saveProducts(updated);
-          renderProducts();
-          if (productId.value === String(productIdValue)) clearForm();
-        }
-      });
-
-      document.getElementById('resetDemo').addEventListener('click', function () {
-        const ok = confirm('هل تريد استعادة المنتجات التجريبية؟');
-        if (!ok) return;
-        saveProducts(demoProducts);
-        renderProducts();
-        clearForm();
-      });
-
-      renderProducts();
-    </script>
-  </body>
-</html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>لوحة الإدارة | BRAVEN</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+.admin-wrap{max-width:1200px;margin:30px auto;padding:0 20px 60px}.admin-grid{display:grid;grid-template-columns:380px 1fr;gap:22px}.admin-panel{background:#fff;border:1px solid #e5ddd5;border-radius:18px;padding:22px;box-shadow:0 8px 25px #00000008}.admin-panel h1,.admin-panel h2{margin-top:0}.admin-panel label{display:block;font-weight:700;margin:12px 0 7px}.admin-panel input,.admin-panel select{width:100%;padding:12px;border:1px solid #ddd3c9;border-radius:10px;background:#faf8f5;font:inherit}.admin-actions{display:flex;gap:10px;margin-top:16px}.admin-btn{border:0;border-radius:10px;padding:12px 16px;cursor:pointer;font-weight:700}.admin-primary{background:#171717;color:#fff}.admin-light{background:#eee8e1;color:#171717}.admin-list{display:grid;gap:12px}.admin-item{display:grid;grid-template-columns:95px 1fr auto;gap:14px;align-items:center;padding:12px;background:#faf8f5;border:1px solid #e7ded5;border-radius:14px}.admin-item img{width:95px;height:95px;object-fit:cover;border-radius:10px;background:#eee}.admin-item h3{margin:0 0 6px}.admin-item p{margin:4px 0;color:#746d65}.admin-danger{background:#fff0ee;color:#a83b31}.image-help{font-size:.82rem;color:#777;line-height:1.6;margin-top:-7px}.preview{width:100%;height:170px;object-fit:cover;border-radius:12px;margin-top:10px;display:none;background:#eee}.admin-top{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:22px}.admin-top a{text-decoration:none;color:inherit}@media(max-width:850px){.admin-grid{grid-template-columns:1fr}.admin-item{grid-template-columns:75px 1fr}.admin-item .admin-actions{grid-column:1/-1;display:flex;gap:8px}.admin-item img{width:75px;height:75px}}
+</style>
+</head>
+<body>
+<header class="header"><a class="logo" href="index.html">♧ BRAVEN<small>ADMIN PANEL</small></a><div class="actions"><a href="index.html">الرئيسية</a></div></header>
+<main class="admin-wrap">
+<div class="admin-top"><div><h1>لوحة الإدارة</h1><p>إضافة وتعديل المنتجات والصور</p></div><button class="admin-btn admin-light" id="resetDemo">استعادة التجريبي</button></div>
+<div class="admin-grid">
+<section class="admin-panel"><h2>إضافة منتج</h2><form id="productForm"><input type="hidden" id="productId">
+<label for="name">اسم المنتج</label><input id="name" required placeholder="مثال: تيشيرت BRAVEN">
+<label for="category">الفئة</label><select id="category"><option>رجالي</option><option>نسائي</option><option>أطفال</option><option>تصاميم</option><option>كاجوال</option><option>هوديز</option><option>إكسسوارات</option></select>
+<label for="price">السعر</label><input id="price" type="number" min="1" required>
+<label for="oldPrice">السعر القديم (اختياري)</label><input id="oldPrice" type="number" min="0" value="0">
+<label for="imageUrl">رابط الصورة (اختياري)</label><input id="imageUrl" type="url" placeholder="https://example.com/photo.jpg"><div class="image-help">أو اختر صورة من جهازك. اختيار الملف يحفظ الصورة داخل المتصفح، ولا تحتاج رابطًا.</div>
+<label for="imageFile">اختيار صورة من الجهاز</label><input id="imageFile" type="file" accept="image/*"><img id="preview" class="preview" alt="معاينة الصورة">
+<div class="admin-actions"><button class="admin-btn admin-primary" type="submit">حفظ المنتج</button><button class="admin-btn admin-light" type="button" id="clearForm">مسح</button></div></form></section>
+<section class="admin-panel"><h2>المنتجات</h2><div id="productList" class="admin-list"></div></section>
+</div></main>
+<script>
+const KEY='braven_products';
+const fallback='https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=900&q=80';
+const demo=[{id:1,name:'تيشيرت Dream Big',category:'رجالي',price:299,oldPrice:349,image:fallback},{id:2,name:'تيشيرت Samurai',category:'تصاميم',price:279,oldPrice:0,image:fallback}];
+const $=id=>document.getElementById(id);
+function products(){try{const x=JSON.parse(localStorage.getItem(KEY)||'[]');return Array.isArray(x)?x:[]}catch(e){return[]}}
+function save(x){localStorage.setItem(KEY,JSON.stringify(x));}
+function render(){const list=$('productList'),items=products();if(!items.length){list.innerHTML='<p>لا توجد منتجات.</p>';return}list.innerHTML=items.map(p=>`<article class="admin-item"><img src="${p.image||fallback}" alt="${p.name}"><div><h3>${p.name}</h3><p>${p.category} · ${p.price} ج.م</p>${p.oldPrice?`<p>قديم: ${p.oldPrice} ج.م</p>`:''}</div><div class="admin-actions"><button class="admin-btn admin-light" data-edit="${p.id}">تعديل</button><button class="admin-btn admin-danger" data-delete="${p.id}">حذف</button></div></article>`).join('')}
+function clearForm(){$('productId').value='';$('name').value='';$('category').value='رجالي';$('price').value='';$('oldPrice').value=0;$('imageUrl').value='';$('imageFile').value='';$('preview').src='';$('preview').style.display='none'}
+$('imageFile').addEventListener('change',()=>{const file=$('imageFile').files[0];if(!file)return;const reader=new FileReader();reader.onload=()=>{$('preview').src=reader.result;$('preview').style.display='block'};reader.readAsDataURL(file)});
+$('imageUrl').addEventListener('input',()=>{if($('imageUrl').value){$('preview').src=$('imageUrl').value;$('preview').style.display='block'}});
+$('productForm').addEventListener('submit',e=>{e.preventDefault();const file=$('imageFile').files[0];const finish=image=>{const item={id:Number($('productId').value)||Date.now(),name:$('name').value.trim(),category:$('category').value,price:Number($('price').value),oldPrice:Number($('oldPrice').value)||0,image:image||fallback};const all=products(),i=all.findIndex(p=>p.id===item.id);if(i<0)all.unshift(item);else all[i]=item;save(all);render();clearForm();alert('تم حفظ المنتج بنجاح')};if(file){const r=new FileReader();r.onload=()=>finish(r.result);r.readAsDataURL(file)}else finish($('imageUrl').value.trim())});
+$('clearForm').onclick=clearForm;
+$('productList').addEventListener('click',e=>{const edit=e.target.closest('[data-edit]'),del=e.target.closest('[data-delete]'),all=products();if(edit){const p=all.find(x=>x.id==edit.dataset.edit);if(!p)return;$('productId').value=p.id;$('name').value=p.name;$('category').value=p.category;$('price').value=p.price;$('oldPrice').value=p.oldPrice||0;$('imageUrl').value=p.image&&p.image.startsWith('data:')?'':p.image||'';$('preview').src=p.image||fallback;$('preview').style.display='block';scrollTo({top:0,behavior:'smooth'})}if(del&&confirm('حذف المنتج؟')){save(all.filter(x=>x.id!=del.dataset.delete));render()}});
+$('resetDemo').onclick=()=>{if(confirm('استعادة المنتجات التجريبية؟')){save(demo);render()}};
+if(!products().length)save(demo);render();
+</script>
+</body></html>
