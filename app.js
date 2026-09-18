@@ -14,12 +14,13 @@ const demoProducts = [
 ];
 
 function normalizeProduct(product) {
-  const rawStock = Number(product.stock);
+  const rawStock = product.stock ?? product.quantity ?? product.inventory ?? product.qty;
+  const numericStock = Number(rawStock);
   return {
     ...product,
     category: product.category || product.cat || 'أخرى',
     oldPrice: product.oldPrice ?? product.old ?? 0,
-    stock: Number.isFinite(rawStock) ? Math.max(0, Math.floor(rawStock)) : 0,
+    stock: Number.isFinite(numericStock) ? Math.max(0, Math.floor(numericStock)) : 0,
     image: product.image || fallbackImage
   };
 }
@@ -45,16 +46,12 @@ function getCart() {
 
     return cart
       .map(item => {
-        if (typeof item === 'number') {
-          return { id: Number(item), qty: 1 };
-        }
-
+        if (typeof item === 'number') return { id: Number(item), qty: 1 };
         if (item && typeof item === 'object') {
           const id = Number(item.id);
           const qty = Number(item.qty || 1);
           return Number.isFinite(id) ? { id, qty: qty > 0 ? qty : 1 } : null;
         }
-
         return null;
       })
       .filter(Boolean);
@@ -70,7 +67,6 @@ function saveCart(cart) {
 function updateCount() {
   const count = document.getElementById('cartCount');
   if (!count) return;
-
   const total = getCart().reduce((sum, item) => sum + Number(item.qty || 0), 0);
   count.textContent = total;
 }
@@ -79,7 +75,6 @@ const grid = document.getElementById('productGrid');
 
 function render(list = getProducts()) {
   if (!grid) return;
-
   const products = Array.isArray(list) ? list.map(normalizeProduct) : getProducts();
   const cart = getCart();
 
@@ -134,11 +129,8 @@ function addToCart(id) {
     return;
   }
 
-  if (current) {
-    current.qty = currentQty + 1;
-  } else {
-    cart.push({ id: Number(id), qty: 1 });
-  }
+  if (current) current.qty = currentQty + 1;
+  else cart.push({ id: Number(id), qty: 1 });
 
   saveCart(cart);
   updateCount();
@@ -168,11 +160,8 @@ function handleCategoryFilter() {
       const all = getProducts();
       let filtered = all;
 
-      if (filter === 'خصومات') {
-        filtered = all.filter(product => Number(product.oldPrice) > 0);
-      } else if (filter !== 'كل') {
-        filtered = all.filter(product => product.category === filter);
-      }
+      if (filter === 'خصومات') filtered = all.filter(product => Number(product.oldPrice) > 0);
+      else if (filter !== 'كل') filtered = all.filter(product => product.category === filter);
 
       setActiveCategory(button);
       render(filtered);
