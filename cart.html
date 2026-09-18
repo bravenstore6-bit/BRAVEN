@@ -1,1 +1,271 @@
-<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>السلة | BRAVEN</title><link rel="stylesheet" href="styles.css"></head><body><header class="header"><a class="logo" href="index.html">♧ BRAVEN<small>Wear Your Style</small></a><nav><a href="index.html">الرئيسية</a><a href="index.html#products">المنتجات</a></nav></header><main class="container cart-list"><h1>سلة المشتريات</h1><div id="cart"></div><a class="btn" href="account.html">إنشاء حساب وإتمام الشراء</a></main><script>const names=["Dream Big","Samurai","Adventure","Good Vibes","Anime","Butterfly","Kids","Street"];let c=JSON.parse(localStorage.getItem("braven_cart")||"[]");let el=document.getElementById("cart");el.innerHTML=c.length?c.map((id,i)=>`<div class="cart-row"><b>تيشيرت ${names[id-1]||"منتج"}</b><span>الكمية: 1</span><span>تمت الإضافة</span></div>`).join(""):"<p>السلة فارغة حالياً.</p>";</script></body></html>
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>السلة | BRAVEN</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Tahoma, Arial, sans-serif;
+      background: #f7f4f1;
+      color: #171515;
+    }
+    a { color: inherit; text-decoration: none; }
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 18px 30px;
+      background: #101010;
+      color: #fff;
+    }
+    .logo {
+      font-size: 2rem;
+      font-weight: 900;
+      letter-spacing: 1px;
+    }
+    .logo small { display: block; font-size: 0.64rem; letter-spacing: 0.12em; opacity: 0.72; }
+    .wrap {
+      max-width: 1100px;
+      margin: 40px auto;
+      padding: 0 20px 60px;
+    }
+    .panel {
+      background: #fff;
+      border: 1px solid #e3dcd3;
+      border-radius: 18px;
+      padding: 22px;
+    }
+    .cart-item {
+      display: grid;
+      grid-template-columns: 110px 1fr auto;
+      gap: 16px;
+      padding: 14px;
+      background: #faf6f2;
+      border: 1px solid #e7ded5;
+      border-radius: 14px;
+      margin-bottom: 12px;
+      align-items: center;
+    }
+    .cart-item img { width: 110px; height: 110px; object-fit: cover; border-radius: 12px; }
+    .qty-box {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      border: 1px solid #ded1c6;
+      border-radius: 12px;
+      padding: 6px 10px;
+      margin-top: 8px;
+    }
+    .qty-box button {
+      width: 28px;
+      height: 28px;
+      border: none;
+      border-radius: 8px;
+      background: #111;
+      color: #fff;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .summary {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 20px;
+      padding-top: 18px;
+      border-top: 1px solid #ece2d8;
+    }
+    .checkout-btn {
+      border: none;
+      border-radius: 12px;
+      padding: 12px 22px;
+      background: #111;
+      color: #fff;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .empty {
+      padding: 28px;
+      text-align: center;
+      border: 1px dashed #dcd1c6;
+      border-radius: 14px;
+      background: #fffaf5;
+      color: #726a64;
+    }
+    @media (max-width: 700px) {
+      .cart-item { grid-template-columns: 90px 1fr; }
+      .summary { flex-direction: column; gap: 12px; align-items: stretch; }
+    }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <a class="logo" href="index.html">♧ BRAVEN<small>CART</small></a>
+    <a href="index.html">العودة للمتجر</a>
+  </header>
+
+  <main class="wrap">
+    <section class="panel">
+      <h2>السلة</h2>
+      <div id="cartList"></div>
+      <div class="summary">
+        <div><strong id="totalPrice">0 ج.م</strong></div>
+        <button class="checkout-btn" id="checkoutBtn" type="button">إتمام الشراء</button>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const PRODUCTS_KEY = 'braven_products';
+    const CART_KEY = 'braven_cart';
+    const fallbackImage = 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=900&q=80';
+
+    function getProducts() {
+      try {
+        return JSON.parse(localStorage.getItem(PRODUCTS_KEY) || '[]');
+      } catch (error) {
+        return [];
+      }
+    }
+
+    function saveProducts(products) {
+      localStorage.setItem(PRODUCTS_KEY, JSON.stringify(products));
+    }
+
+    function getCart() {
+      try {
+        const cart = JSON.parse(localStorage.getItem(CART_KEY) || '[]');
+        return Array.isArray(cart) ? cart : [];
+      } catch (error) {
+        return [];
+      }
+    }
+
+    function saveCart(cart) {
+      localStorage.setItem(CART_KEY, JSON.stringify(cart));
+    }
+
+    function renderCart() {
+      const products = getProducts();
+      const cart = getCart();
+      const list = document.getElementById('cartList');
+
+      if (!cart.length) {
+        list.innerHTML = '<div class="empty">السلة فارغة حاليًا.</div>';
+        document.getElementById('totalPrice').textContent = '0 ج.م';
+        return;
+      }
+
+      let total = 0;
+      list.innerHTML = cart.map(item => {
+        const product = products.find(p => Number(p.id) === Number(item.id));
+        if (!product) return '';
+
+        const qty = Number(item.qty || 1);
+        const lineTotal = product.price * qty;
+        total += lineTotal;
+
+        return `
+          <div class="cart-item">
+            <img src="${product.image || fallbackImage}" alt="${product.name}" onerror="this.src='${fallbackImage}'" />
+            <div>
+              <h3 style="margin:0 0 4px;">${product.name}</h3>
+              <p style="margin:0; color:#6a615d;">${product.category}</p>
+              <div class="qty-box">
+                <button data-action="minus" data-id="${product.id}" type="button">-</button>
+                <span>${qty}</span>
+                <button data-action="plus" data-id="${product.id}" type="button">+</button>
+              </div>
+            </div>
+            <div>
+              <strong>${lineTotal} ج.م</strong><br>
+              <button type="button" data-action="remove" data-id="${product.id}" style="margin-top:10px; background:#f5e9e3; color:#6b2e2e; width:auto; padding:8px 12px;">حذف</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      document.getElementById('totalPrice').textContent = total + ' ج.م';
+      document.querySelectorAll('[data-action="plus"]').forEach(button => {
+        button.onclick = () => updateQty(Number(button.dataset.id), 1);
+      });
+      document.querySelectorAll('[data-action="minus"]').forEach(button => {
+        button.onclick = () => updateQty(Number(button.dataset.id), -1);
+      });
+      document.querySelectorAll('[data-action="remove"]').forEach(button => {
+        button.onclick = () => removeFromCart(Number(button.dataset.id));
+      });
+    }
+
+    function updateQty(id, delta) {
+      const cart = getCart();
+      const products = getProducts();
+      const product = products.find(item => Number(item.id) === Number(id));
+      const current = cart.find(item => Number(item.id) === Number(id));
+      if (!product || !current) return;
+
+      const nextQty = Number(current.qty || 1) + delta;
+      if (nextQty <= 0) {
+        removeFromCart(id);
+        return;
+      }
+
+      if (nextQty > product.stock) {
+        alert('لا يوجد مخزون كافٍ لهذه الكمية');
+        return;
+      }
+
+      current.qty = nextQty;
+      saveCart(cart);
+      renderCart();
+      if (window.bravenSync) window.bravenSync();
+    }
+
+    function removeFromCart(id) {
+      const cart = getCart().filter(item => Number(item.id) !== Number(id));
+      saveCart(cart);
+      renderCart();
+      if (window.bravenSync) window.bravenSync();
+    }
+
+    document.getElementById('checkoutBtn').addEventListener('click', function () {
+      const cart = getCart();
+      const products = getProducts();
+
+      if (!cart.length) {
+        alert('السلة فارغة');
+        return;
+      }
+
+      let ok = true;
+      cart.forEach(item => {
+        const product = products.find(p => Number(p.id) === Number(item.id));
+        if (!product || Number(product.stock) < Number(item.qty)) {
+          ok = false;
+        }
+      });
+
+      if (!ok) {
+        alert('بعض المنتجات لم تعد متاحة بالمخزون المطلوب');
+        return;
+      }
+
+      cart.forEach(item => {
+        const product = products.find(p => Number(p.id) === Number(item.id));
+        if (product) product.stock = Number(product.stock) - Number(item.qty || 0);
+      });
+
+      saveProducts(products);
+      saveCart([]);
+      renderCart();
+      if (window.bravenSync) window.bravenSync();
+      alert('تمت عملية الشراء بنجاح');
+    });
+
+    renderCart();
+    if (window.bravenSync) window.bravenSync();
+  </script>
+</body>
+</html>
