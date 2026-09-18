@@ -117,6 +117,39 @@
       background: #fffaf5;
       color: #726a64;
     }
+    .modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.45);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 999;
+    }
+    .modal-box {
+      width: min(420px, calc(100% - 32px));
+      background: #f4f2f1;
+      border-radius: 16px;
+      box-shadow: 0 12px 32px rgba(0,0,0,0.2);
+      padding: 18px 20px 20px;
+      text-align: center;
+    }
+    .modal-box p {
+      margin: 0 0 18px;
+      font-weight: 700;
+      font-size: 1rem;
+      line-height: 1.7;
+      color: #1b1b1b;
+    }
+    .modal-box button {
+      background: #3d3d3d;
+      color: #fff;
+      border: none;
+      border-radius: 999px;
+      padding: 12px 36px;
+      font-weight: 700;
+      cursor: pointer;
+    }
     @media (max-width: 700px) {
       .customer-grid { grid-template-columns: 1fr; }
       .cart-item { grid-template-columns: 90px 1fr; }
@@ -219,6 +252,20 @@
       document.getElementById('customerAddress').value = '';
     }
 
+    function showToast(message) {
+      const modal = document.createElement('div');
+      modal.className = 'modal';
+      modal.innerHTML = `
+        <div class="modal-box">
+          <p>${message}</p>
+          <button type="button">حسنا</button>
+        </div>
+      `;
+      const button = modal.querySelector('button');
+      button.addEventListener('click', () => modal.remove());
+      document.body.appendChild(modal);
+    }
+
     function renderCart() {
       const products = getProducts();
       const cart = getCart();
@@ -285,7 +332,7 @@
       }
 
       if (nextQty > product.stock) {
-        alert('لا يوجد مخزون كافٍ لهذه الكمية');
+        showToast('بعض المنتجات لم تعد متاحة الآن');
         return;
       }
 
@@ -307,25 +354,25 @@
       const products = getProducts();
 
       if (!cart.length) {
-        alert('السلة فارغة');
+        showToast('السلة فارغة');
         return;
       }
 
       const customer = getCustomerData();
       if (!customer.name || customer.name === 'غير محدد') {
-        alert('يرجى إدخال اسم العميل');
+        showToast('يرجى إدخال اسم العميل');
         document.getElementById('customerName').focus();
         return;
       }
 
       if (!customer.phone || customer.phone === 'غير محدد') {
-        alert('يرجى إدخال رقم الهاتف');
+        showToast('يرجى إدخال رقم الهاتف');
         document.getElementById('customerPhone').focus();
         return;
       }
 
       if (!customer.address || customer.address === 'غير محدد') {
-        alert('يرجى إدخال عنوان التوصيل');
+        showToast('يرجى إدخال عنوان التوصيل');
         document.getElementById('customerAddress').focus();
         return;
       }
@@ -339,7 +386,7 @@
       });
 
       if (!ok) {
-        alert('بعض المنتجات لم تعد متاحة بالمخزون المطلوب');
+        showToast('بعض المنتجات لم تعد متاحة بالمخزون المطلوب');
         return;
       }
 
@@ -373,7 +420,7 @@
       renderCart();
       clearCustomerData();
       if (window.bravenSync) window.bravenSync();
-      alert('تم تسجيل الطلب بنجاح');
+      showToast('تم تسجيل الطلب بنجاح');
     });
 
     renderCart();
