@@ -12,9 +12,11 @@
 <header class="header"><a class="logo" href="index.html">♧ BRAVEN<small>ADMIN PANEL</small></a><div class="actions"><a href="index.html">الرئيسية</a></div></header>
 <div id="adminLock" class="admin-lock">
   <h2>الدخول إلى لوحة الإدارة</h2>
-  <input id="adminPasswordInput" type="password" placeholder="أدخل كلمة المرور" />
+  <input id="adminEmailInput" type="email" placeholder="البريد الإلكتروني" autocomplete="username" />
+  <input id="adminPasswordInput" type="password" placeholder="كلمة المرور" autocomplete="current-password" />
   <button id="adminLoginBtn" type="button">دخول</button>
-  <div class="admin-lock-note">النسخة الحالية هي نسخة تجريبية، وتستخدم كلمة مرور محلية فقط في المتصفح.</div>
+  <div class="admin-lock-note">تسجيل الدخول أصبح عبر Supabase بشكل آمن، وليس بكلمة مرور محلية.</div>
+  <p id="adminLoginMessage" style="color:#9b3333"></p>
 </div>
 <main id="adminApp" class="admin-wrap admin-hidden">
   <div class="admin-top"><div><h1>لوحة الإدارة</h1><p>إضافة المنتجات وإدارة الأسعار والمخزون والطلبات</p></div></div>
@@ -37,87 +39,110 @@
     </form></section>
     <section class="admin-panel"><h2>المنتجات والمخزون</h2><div id="productList" class="admin-list"></div></section>
   </div>
-  <section class="admin-panel orders-panel"><div class="orders-head"><div><h2>الطلبات</h2><p>الطلبات المحفوظة من عمليات الشراء على هذا المتصفح.</p></div><button class="admin-btn admin-light" id="clearOrders" type="button">مسح الطلبات</button></div><div id="ordersList"></div></section>
+  <section class="admin-panel orders-panel"><div class="orders-head"><div><h2>الطلبات</h2><p>الطلبات المسجلة مركزيًا في قاعدة بيانات المتجر.</p></div><button class="admin-btn admin-light" id="clearOrders" type="button">مسح الطلبات</button></div><div id="ordersList"></div></section>
 </main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
 <script>
-const PRODUCTS_KEY='braven_products';
-const ORDERS_KEY='braven_orders';
-const ADMIN_PASS_KEY='braven_admin_pass';
 const fallback='https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=900&q=80';
+const supabaseClient=window.supabase.createClient(window.BRAVEN_SUPABASE_URL,window.BRAVEN_SUPABASE_KEY);
 const $=id=>document.getElementById(id);
 
-function escapeHtml(value){
-  return String(value ?? '')
-    .replace(/&/g,'&amp;')
-    .replace(/</g,'&lt;')
-    .replace(/>/g,'&gt;')
-    .replace(/"/g,'&quot;')
-    .replace(/'/g,'&#039;');
+function escapeHtml(value){return String(value??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;')}
+
+async function products(){
+  const {data,error}=await supabaseClient.from('products').select('id,name,category,price,old_price:old_price,stock,image').order('id',{ascending:true});
+  if(error){console.error(error);return[]}
+  return (data||[]).map(p=>({...p,id:Number(p.id),price:Number(p.price||0),oldPrice:Number(p.old_price||0),stock:Math.max(0,Math.floor(Number(p.stock||0))),image:p.image||fallback}));
 }
-
-function ensureAdminAccess(){
-  const saved = localStorage.getItem(ADMIN_PASS_KEY) || '';
-  if (!saved) {
-    const pass = prompt('اختر كلمة مرور لوحة الإدارة (تجريبية فقط):');
-    if (!pass || !pass.trim()) {
-      document.getElementById('adminLock').innerHTML = '<div class="admin-lock"><h2>تم إيقاف الوصول</h2><p>يجب إدخال كلمة مرور للوصول إلى لوحة الإدارة.</p></div>';
-      return false;
-    }
-    localStorage.setItem(ADMIN_PASS_KEY, pass.trim());
-  }
-
-  const entered = prompt('أدخل كلمة مرور لوحة الإدارة:');
-  if (entered !== localStorage.getItem(ADMIN_PASS_KEY)) {
-    document.getElementById('adminLock').innerHTML = '<div class="admin-lock"><h2>كلمة المرور غير صحيحة</h2><p>تم رفض الدخول إلى لوحة الإدارة.</p></div>';
-    return false;
-  }
-
-  document.getElementById('adminLock').classList.add('admin-hidden');
-  document.getElementById('adminApp').classList.remove('admin-hidden');
-  return true;
+async function orders(){
+  const {data,error}=await supabaseClient.from('orders').select('id,created_at,status,customer,items,total').order('created_at',{ascending:false});
+  if(error){console.error(error);return[]}
+  return data||[];
 }
-
-function products(){
-  try {
-    const x=JSON.parse(localStorage.getItem(PRODUCTS_KEY)||'[]');
-    return Array.isArray(x)?x.map(p=>({...p,stock:Math.max(0,Math.floor(Number(p.stock ?? p.quantity ?? p.inventory ?? p.qty ?? 0)))})):[];
-  } catch (e) { return []; }
+async function renderStats(){
+  const ps=await products(),os=(await orders()).filter(o=>(o.status||'جديد')!=='ملغي');
+  const revenue=os.reduce((sum,o)=>sum+Number(o.total||0),0);
+  $('statOrders').textContent=os.length;$('statRevenue').textContent=revenue+' ج.م';$('statProducts').textContent=ps.length;$('statStock').textContent=ps.reduce((sum,p)=>sum+Number(p.stock||0),0);
 }
-function saveProducts(x){localStorage.setItem(PRODUCTS_KEY,JSON.stringify(x))}
-function orders(){try{const x=JSON.parse(localStorage.getItem(ORDERS_KEY)||'[]');return Array.isArray(x)?x:[]}catch(e){return[]}}
-function saveOrders(x){localStorage.setItem(ORDERS_KEY,JSON.stringify(x))}
-function renderStats(){const ps=products(),os=orders().filter(o=>(o.status||'جديد')!=='ملغي');const revenue=os.reduce((sum,o)=>sum+Number(o.total||0),0);$('statOrders').textContent=os.length;$('statRevenue').textContent=revenue+' ج.م';$('statProducts').textContent=ps.length;$('statStock').textContent=ps.reduce((sum,p)=>sum+Number(p.stock||0),0);}
-function renderProducts(){const list=$('productList'),items=products();if(!items.length){list.innerHTML='<p>لا توجد منتجات.</p>';return}list.innerHTML=items.map(p=>`<article class="admin-item"><img src="${escapeHtml(p.image||fallback)}" alt="${escapeHtml(p.name)}" onerror="this.src='${fallback}'"><div class="admin-item-info"><b>${escapeHtml(p.name)}</b><div>${escapeHtml(p.category)} · ${escapeHtml(p.price)} ج.م · المخزون: ${escapeHtml(p.stock)}</div></div><div class="admin-item-actions"><button class="edit" data-edit="${escapeHtml(p.id)}" type="button">تعديل</button><button class="delete" data-delete="${escapeHtml(p.id)}" type="button">حذف</button></div></article>`).join('')}
-function renderOrders(){const list=$('ordersList'),items=orders();if(!items.length){list.innerHTML='<div class="empty">لا توجد طلبات حتى الآن.</div>';return}list.innerHTML=items.slice().reverse().map(o=>{const status=o.status||'جديد',customer=o.customer||{};const productsHtml=(o.items||[]).map(i=>`<li>${escapeHtml(i.name||'منتج')} × ${Number(i.qty||1)} — ${Number(i.price||0)*Number(i.qty||1)} ج.م</li>`).join('');return `<article class="order-item"><div class="order-meta"><strong>طلب #${escapeHtml(o.id)}</strong><span>${escapeHtml(o.date||'')}</span><span class="order-status ${status==='مكتمل'?'done':status==='ملغي'?'cancelled':''}">${escapeHtml(status)}</span><strong>${escapeHtml(o.total||0)} ج.م</strong></div><div class="customer-info"><strong>العميل:</strong> ${escapeHtml(customer.name||'غير محدد')}<br><strong>الهاتف:</strong> ${escapeHtml(customer.phone||'غير محدد')}<br><strong>العنوان:</strong> ${escapeHtml(customer.address||'غير محدد')}</div><ul class="order-products">${productsHtml}</ul><div class="order-controls"><button class="admin-btn admin-light" data-status="قيد التجهيز" data-order="${escapeHtml(o.id)}" type="button">قيد التجهيز</button><button class="admin-btn admin-light" data-status="مكتمل" data-order="${escapeHtml(o.id)}" type="button">مكتمل</button><button class="admin-btn admin-light" data-status="ملغي" data-order="${escapeHtml(o.id)}" type="button">ملغي</button></div></article>`}).join('')}
+async function renderProducts(){
+  const list=$('productList'),items=await products();
+  if(!items.length){list.innerHTML='<p>لا توجد منتجات.</p>';return}
+  list.innerHTML=items.map(p=>`<article class="admin-item"><img src="${escapeHtml(p.image||fallback)}" alt="${escapeHtml(p.name)}" onerror="this.src='${fallback}'"><div class="admin-item-info"><b>${escapeHtml(p.name)}</b><div>${escapeHtml(p.category)} · ${escapeHtml(p.price)} ج.م · المخزون: ${escapeHtml(p.stock)}</div></div><div class="admin-item-actions"><button class="edit" data-edit="${escapeHtml(p.id)}" type="button">تعديل</button><button class="delete" data-delete="${escapeHtml(p.id)}" type="button">حذف</button></div></article>`).join('')
+}
+function formatDate(value){try{return new Date(value).toLocaleString('ar-EG')}catch(e){return value||''}}
+async function renderOrders(){
+  const list=$('ordersList'),items=await orders();
+  if(!items.length){list.innerHTML='<div class="empty">لا توجد طلبات حتى الآن.</div>';return}
+  list.innerHTML=items.map(o=>{
+    const status=o.status||'جديد',customer=o.customer||{};
+    const productsHtml=(o.items||[]).map(i=>`<li>${escapeHtml(i.name||'منتج')} × ${Number(i.qty||1)} — ${Number(i.price||0)*Number(i.qty||1)} ج.م</li>`).join('');
+    return `<article class="order-item"><div class="order-meta"><strong>طلب #${escapeHtml(o.id)}</strong><span>${escapeHtml(formatDate(o.created_at))}</span><span class="order-status ${status==='مكتمل'?'done':status==='ملغي'?'cancelled':''}">${escapeHtml(status)}</span><strong>${escapeHtml(o.total||0)} ج.م</strong></div><div class="customer-info"><strong>العميل:</strong> ${escapeHtml(customer.name||'غير محدد')}<br><strong>الهاتف:</strong> ${escapeHtml(customer.phone||'غير محدد')}<br><strong>العنوان:</strong> ${escapeHtml(customer.address||'غير محدد')}</div><ul class="order-products">${productsHtml}</ul><div class="order-controls"><button class="admin-btn admin-light" data-status="قيد التجهيز" data-order="${escapeHtml(o.id)}" type="button">قيد التجهيز</button><button class="admin-btn admin-light" data-status="مكتمل" data-order="${escapeHtml(o.id)}" type="button">مكتمل</button><button class="admin-btn admin-light" data-status="ملغي" data-order="${escapeHtml(o.id)}" type="button">ملغي</button></div></article>`
+  }).join('')
+}
 function clearForm(){$('productId').value='';$('name').value='';$('category').value='رجالي';$('price').value='';$('oldPrice').value=0;$('stock').value=0;$('imageUrl').value='';$('imageFile').value='';$('preview').style.display='none'}
 $('imageFile').addEventListener('change',()=>{const file=$('imageFile').files[0];if(!file)return;const reader=new FileReader();reader.onload=()=>{$('preview').src=reader.result;$('preview').style.display='block'};reader.readAsDataURL(file)});
 $('imageUrl').addEventListener('input',()=>{if($('imageUrl').value){$('preview').src=$('imageUrl').value;$('preview').style.display='block'}});
-$('productForm').addEventListener('submit',e=>{e.preventDefault();const file=$('imageFile').files[0];const finish=image=>{const all=products(),item={id:Number($('productId').value)||Date.now(),name:$('name').value.trim(),category:$('category').value,price:Number($('price').value),oldPrice:Number($('oldPrice').value)||0,stock:Math.max(0,Math.floor(Number($('stock').value)||0)),image:image||fallback};const index=all.findIndex(p=>Number(p.id)===item.id);if(index>=0)all[index]=item;else all.push(item);saveProducts(all);renderProducts();renderStats();clearForm()};if(file){const reader=new FileReader();reader.onload=()=>finish(reader.result);reader.readAsDataURL(file)}else finish($('imageUrl').value.trim())});
-$('clearForm').onclick=clearForm;
-$('productList').addEventListener('click',e=>{const edit=e.target.closest('[data-edit]'),del=e.target.closest('[data-delete]'),all=products();if(edit){const p=all.find(x=>Number(x.id)===Number(edit.dataset.edit));if(!p)return;$('productId').value=p.id;$('name').value=p.name;$('category').value=p.category;$('price').value=p.price;$('oldPrice').value=p.oldPrice||0;$('stock').value=p.stock||0;$('imageUrl').value=p.image&&p.image!==fallback?p.image:'';$('preview').src=p.image||fallback;$('preview').style.display='block';window.scrollTo({top:0,behavior:'smooth'})}if(del&&confirm('حذف هذا المنتج؟')){saveProducts(all.filter(x=>Number(x.id)!==Number(del.dataset.delete)));renderProducts();renderStats()}});
-$('ordersList').addEventListener('click',e=>{const button=e.target.closest('[data-status]');if(!button)return;const all=orders(),order=all.find(o=>String(o.id)===String(button.dataset.order));if(order){order.status=button.dataset.status;saveOrders(all);renderOrders();renderStats()}});
-$('clearOrders').onclick=()=>{if(confirm('مسح سجل الطلبات؟')){saveOrders([]);renderOrders();renderStats()}};
-const adminReady = ensureAdminAccess();
-if (adminReady) {
-  if(!products().length)saveProducts([{id:1,name:'تيشيرت Dream Big',category:'رجالي',price:299,oldPrice:349,stock:10,image:fallback},{id:2,name:'تيشيرت Samurai',category:'تصاميم',price:279,oldPrice:0,stock:10,image:fallback},{id:3,name:'تيشيرت Adventure',category:'كاجوال',price:319,oldPrice:0,stock:10,image:fallback},{id:4,name:'تيشيرت Good Vibes',category:'رجالي',price:299,oldPrice:349,stock:10,image:fallback},{id:5,name:'تيشيرت Anime',category:'تصاميم',price:289,oldPrice:0,stock:10,image:fallback},{id:6,name:'تيشيرت Butterfly',category:'نسائي',price:279,oldPrice:0,stock:10,image:fallback},{id:7,name:'تيشيرت Kids',category:'أطفال',price:229,oldPrice:0,stock:10,image:fallback},{id:8,name:'هودي Street',category:'هوديز',price:449,oldPrice:499,stock:10,image:fallback}]);
-  renderProducts();renderOrders();renderStats();
-}
 
-$('adminLoginBtn').addEventListener('click', () => {
-  const val = $('adminPasswordInput').value.trim();
-  const saved = localStorage.getItem(ADMIN_PASS_KEY) || '';
-  if (!saved) {
-    if (!val) return alert('أدخل كلمة مرور');
-    localStorage.setItem(ADMIN_PASS_KEY, val);
-  }
-  if (val !== saved && val !== localStorage.getItem(ADMIN_PASS_KEY)) {
-    alert('كلمة المرور غير صحيحة');
-    return;
-  }
-  document.getElementById('adminLock').classList.add('admin-hidden');
-  document.getElementById('adminApp').classList.remove('admin-hidden');
-  renderProducts();renderOrders();renderStats();
+$('productForm').addEventListener('submit',async e=>{
+  e.preventDefault();
+  const file=$('imageFile').files[0];
+  const finish=async image=>{
+    const id=Number($('productId').value)||null;
+    const item={name:$('name').value.trim(),category:$('category').value,price:Number($('price').value),old_price:Number($('oldPrice').value)||0,stock:Math.max(0,Math.floor(Number($('stock').value)||0)),image:image||fallback};
+    const result=id
+      ? await supabaseClient.from('products').update(item).eq('id',id)
+      : await supabaseClient.from('products').insert(item);
+    if(result.error){console.error(result.error);alert('تعذر حفظ المنتج: '+result.error.message);return}
+    await renderProducts();await renderStats();clearForm();
+  };
+  if(file){const reader=new FileReader();reader.onload=()=>finish(reader.result);reader.readAsDataURL(file)}
+  else finish($('imageUrl').value.trim());
 });
+$('clearForm').onclick=clearForm;
+
+$('productList').addEventListener('click',async e=>{
+  const edit=e.target.closest('[data-edit]'),del=e.target.closest('[data-delete]');
+  const all=await products();
+  if(edit){
+    const p=all.find(x=>Number(x.id)===Number(edit.dataset.edit));if(!p)return;
+    $('productId').value=p.id;$('name').value=p.name;$('category').value=p.category;$('price').value=p.price;$('oldPrice').value=p.oldPrice||0;$('stock').value=p.stock||0;$('imageUrl').value=p.image&&p.image!==fallback?p.image:'';$('preview').src=p.image||fallback;$('preview').style.display='block';window.scrollTo({top:0,behavior:'smooth'});
+  }
+  if(del&&confirm('حذف هذا المنتج؟')){
+    const {error}=await supabaseClient.from('products').delete().eq('id',Number(del.dataset.delete));
+    if(error)alert('تعذر حذف المنتج: '+error.message);else{await renderProducts();await renderStats()}
+  }
+});
+$('ordersList').addEventListener('click',async e=>{
+  const button=e.target.closest('[data-status]');if(!button)return;
+  const {error}=await supabaseClient.from('orders').update({status:button.dataset.status}).eq('id',Number(button.dataset.order));
+  if(error)alert('تعذر تحديث الطلب: '+error.message);else{await renderOrders();await renderStats()}
+});
+$('clearOrders').onclick=async()=>{
+  if(!confirm('مسح سجل الطلبات؟'))return;
+  const {error}=await supabaseClient.from('orders').delete().neq('id',0);
+  if(error)alert('تعذر مسح الطلبات: '+error.message);else{await renderOrders();await renderStats()}
+};
+
+async function openAdmin(){
+  $('adminLock').classList.add('admin-hidden');$('adminApp').classList.remove('admin-hidden');
+  await renderProducts();await renderOrders();await renderStats();
+}
+async function login(){
+  const email=$('adminEmailInput').value.trim(),password=$('adminPasswordInput').value;
+  $('adminLoginMessage').textContent='';
+  if(!email||!password){$('adminLoginMessage').textContent='أدخل البريد الإلكتروني وكلمة المرور.';return}
+  const {error}=await supabaseClient.auth.signInWithPassword({email,password});
+  if(error){$('adminLoginMessage').textContent='بيانات الدخول غير صحيحة أو الحساب غير مفعّل.';console.error(error);return}
+  await openAdmin();
+}
+$('adminLoginBtn').addEventListener('click',login);
+$('adminPasswordInput').addEventListener('keydown',e=>{if(e.key==='Enter')login()});
+
+(async()=>{
+  const {data}=await supabaseClient.auth.getSession();
+  if(data.session) await openAdmin();
+})();
 </script>
 </body>
 </html>

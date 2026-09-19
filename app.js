@@ -1,66 +1,52 @@
-const fallbackImage = 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=900&q=80';
-const STORAGE_KEY = 'braven_products';
+const PRODUCTS_KEY = 'braven_products';
 const CART_KEY = 'braven_cart';
+const fallbackImage = 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=900&q=80';
 
-const demoProducts = [
-  { id: 1, name: 'تيشيرت Dream Big', category: 'رجالي', price: 299, oldPrice: 349, stock: 10, dark: true, image: fallbackImage },
-  { id: 2, name: 'تيشيرت Samurai', category: 'تصاميم', price: 279, oldPrice: 0, stock: 10, image: fallbackImage },
-  { id: 3, name: 'تيشيرت Adventure', category: 'كاجوال', price: 319, oldPrice: 0, stock: 10, image: fallbackImage },
-  { id: 4, name: 'تيشيرت Good Vibes', category: 'رجالي', price: 299, oldPrice: 349, stock: 10, image: fallbackImage },
-  { id: 5, name: 'تيشيرت Anime', category: 'تصاميم', price: 289, oldPrice: 0, stock: 10, image: fallbackImage },
-  { id: 6, name: 'تيشيرت Butterfly', category: 'نسائي', price: 279, oldPrice: 0, stock: 10, image: fallbackImage },
-  { id: 7, name: 'تيشيرت Kids', category: 'أطفال', price: 229, oldPrice: 0, stock: 10, image: fallbackImage },
-  { id: 8, name: 'هودي Street', category: 'هوديز', price: 449, oldPrice: 499, stock: 10, image: fallbackImage }
-];
+const supabaseClient = window.supabase.createClient(
+  window.BRAVEN_SUPABASE_URL,
+  window.BRAVEN_SUPABASE_KEY
+);
 
 function normalizeProduct(product) {
-  const rawStock = product && (product.stock ?? product.quantity ?? product.inventory ?? product.qty ?? 0);
-  const numericStock = Number(rawStock);
-
+  const stock = Number(product?.stock ?? 0);
   return {
     ...product,
-    category: product?.category || product?.cat || 'أخرى',
-    oldPrice: product?.oldPrice ?? product?.old ?? 0,
-    stock: Number.isFinite(numericStock) ? Math.max(0, Math.floor(numericStock)) : 0,
+    id: Number(product.id),
+    category: product?.category || 'أخرى',
+    oldPrice: Number(product?.oldPrice ?? product?.old_price ?? 0),
+    price: Number(product?.price ?? 0),
+    stock: Number.isFinite(stock) ? Math.max(0, Math.floor(stock)) : 0,
     image: product?.image || fallbackImage
   };
 }
 
-function getProducts() {
-  try {
-    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
-    if (Array.isArray(saved) && saved.length) return saved.map(normalizeProduct);
-  } catch (error) {}
+async function getProducts() {
+  const { data, error } = await supabaseClient
+    .from('products')
+    .select('id,name,category,price,old_price:old_price,stock,image')
+    .order('id', { ascending: true });
 
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(demoProducts));
-  return demoProducts.map(normalizeProduct);
+  if (error) {
+    console.error('Supabase products error:', error);
+    return [];
+  }
+  return (data || []).map(normalizeProduct);
 }
 
-function saveProducts(products) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(products.map(normalizeProduct)));
-}
-
-function getCart() {
+async function getCart() {
   try {
-    const cart = JSON.parse(localStorage.getItem(CART_KEY) || '[]');
-    if (!Array.isArray(cart)) return [];
-
-    return cart
-      .map(item => {
-        if (typeof item === 'number') {
-          return { id: Number(item), qty: 1 };
-        }
-
-        if (item && typeof item === 'object') {
-          const id = Number(item.id);
-          const qty = Number(item.qty || 1);
-          return Number.isFinite(id) ? { id, qty: qty > 0 ? qty : 1 } : null;
-        }
-
-        return null;
-      })
-      .filter(Boolean);
-  } catch (error) {
+    const saved = JSON.parse(localStorage.getItem(CART_KEY) || '[]');
+    if (!Array.isArray(saved)) return [];
+    return saved.map(item => {
+      if (typeof item === 'number') return { id: Number(item), qty: 1 };
+      if (item && typeof item === 'object') {
+        const id = Number(item.id);
+        const qty = Number(item.qty || 1);
+        return Number.isFinite(id) ? { id, qty: qty > 0 ? qty : 1 } : null;
+      }
+      return null;
+    }).filter(Boolean);
+  } catch {
     return [];
   }
 }
@@ -69,19 +55,24 @@ function saveCart(cart) {
   localStorage.setItem(CART_KEY, JSON.stringify(cart));
 }
 
-function updateCount() {
+async function updateCount() {
   const count = document.getElementById('cartCount');
   if (!count) return;
-  const total = getCart().reduce((sum, item) => sum + Number(item.qty || 0), 0);
-  count.textContent = total;
+  const cart = await getCart();
+  count.textContent = cart.reduce((sum, item) => sum + Number(item.qty || 0), 0);
 }
 
 const grid = document.getElementById('productGrid');
 
-function render(list = getProducts()) {
+async function render(list = null) {
   if (!grid) return;
-  const products = Array.isArray(list) ? list.map(normalizeProduct) : getProducts();
-  const cart = getCart();
+  const products = Array.isArray(list) ? list.map(normalizeProduct) : await getProducts();
+  const cart = await getCart();
+
+  if (!products.length) {
+    grid.innerHTML = '<p style="grid-column:1/-1;text-align:center;padding:30px">لا توجد منتجات متاحة حاليًا.</p>';
+    return;
+  }
 
   grid.innerHTML = products.map(product => {
     const available = product.stock > 0;
@@ -115,17 +106,17 @@ function render(list = getProducts()) {
   bindAddButtons();
 }
 
-function addToCart(id) {
-  const products = getProducts();
+async function addToCart(id) {
+  const products = await getProducts();
   const product = products.find(item => Number(item.id) === Number(id));
 
   if (!product || product.stock <= 0) {
     alert('هذا المنتج غير متوفر حاليًا');
-    render(products);
+    await render(products);
     return;
   }
 
-  const cart = getCart();
+  const cart = await getCart();
   const current = cart.find(item => Number(item.id) === Number(id));
   const currentQty = current ? Number(current.qty || 0) : 0;
 
@@ -138,8 +129,8 @@ function addToCart(id) {
   else cart.push({ id: Number(id), qty: 1 });
 
   saveCart(cart);
-  updateCount();
-  render(products);
+  await updateCount();
+  await render(products);
   alert('تمت إضافة المنتج إلى السلة');
 }
 
@@ -160,28 +151,27 @@ function handleCategoryFilter() {
   if (!buttons.length) return;
 
   buttons.forEach(button => {
-    button.onclick = () => {
+    button.onclick = async () => {
       const filter = button.dataset.filter;
-      const all = getProducts();
+      const all = await getProducts();
       let filtered = all;
 
       if (filter === 'خصومات') filtered = all.filter(product => Number(product.oldPrice) > 0);
       else if (filter !== 'كل') filtered = all.filter(product => product.category === filter);
 
       setActiveCategory(button);
-      render(filtered);
+      await render(filtered);
     };
   });
 }
 
-function syncProductsFromAdmin() {
-  render(getProducts());
-  updateCount();
+async function initBravenStore() {
+  handleCategoryFilter();
+  await render();
+  await updateCount();
 }
 
 if (typeof document !== 'undefined') {
-  handleCategoryFilter();
-  render();
-  updateCount();
-  window.bravenSync = syncProductsFromAdmin;
+  initBravenStore();
+  window.bravenSupabase = supabaseClient;
 }
