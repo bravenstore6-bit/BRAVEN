@@ -8,13 +8,13 @@
 <body>
 <header class="header">
   <div class="top-social">
-    <a href="tel:+201001648519" target="_blank" title="اتصال">☎</a>
-    <a href="https://wa.me/201001648519" target="_blank" title="واتساب">✆</a>
-    <a href="https://www.instagram.com/braven7117?stkn=MTlnc2VxcGY0OW10dA==" target="_blank" title="إنستغرام">◎</a>
-    <a href="https://www.tiktok.com/@braven9631?_r=1&_t=ZS-99qZ0NtZvTp" target="_blank" title="تيك توك">♪</a>
-    <a href="mailto:braven.store6@gmail.com" title="البريد الإلكتروني">✉</a>
+    <a id="topPhone" href="tel:+201001648519" title="اتصال">☎</a>
+    <a id="topWhatsapp" href="https://wa.me/201001648519" target="_blank" rel="noopener" title="واتساب">✆</a>
+    <a id="topInstagram" href="https://www.instagram.com/braven7117" target="_blank" rel="noopener" title="إنستغرام">◎</a>
+    <a id="topTiktok" href="https://www.tiktok.com/@braven9631" target="_blank" rel="noopener" title="تيك توك">♪</a>
+    <a id="topEmail" href="mailto:braven.store6@gmail.com" title="البريد الإلكتروني">✉</a>
   </div>
-  <a class="logo" href="index.html"><span>♧</span> BRAVEN<small>Wear Your Style</small></a>
+  <a class="logo" href="index.html"><span>♧</span> <span data-brand-name>BRAVEN</span><small data-brand-tagline>Wear Your Style</small></a>
   <nav>
     <a class="active" href="index.html">الرئيسية</a><a href="#products">جميع المنتجات</a>
     <a href="#categories">الأقسام</a><a href="#about">من نحن</a><a href="#contact">تواصل معنا</a>
@@ -23,56 +23,54 @@
 </header>
 
 <section class="hero">
-  <div class="hero-copy"><p>أحدث التصاميم لعام 2026</p><h1>تيشيرتات تعبر عن <em>شخصيتك</em></h1><div>تصاميم عصرية · جودة عالية · راحة لا تضاهى · أزياء تمزج بين الأسلوب والراحة</div></div>
+  <div class="hero-copy"><p id="heroEyebrow">أحدث التصاميم لعام 2026</p><h1 id="heroTitle">تيشيرتات تعبر عن <em>شخصيتك</em></h1><div id="heroText">تصاميم عصرية · جودة عالية · راحة لا تضاهى · أزياء تمزج بين الأسلوب والراحة</div><a id="heroButton" class="btn" href="#products" style="display:inline-block;margin-top:18px">تسوق الآن</a></div>
   <div class="hero-shirt">TEE<br><strong>STYLE</strong></div>
 </section>
 
-<section class="container" id="categories">
-  <div class="section-head"><div><h2>تسوق حسب الفئة</h2><p>اختار الستايل اللي يناسبك</p></div></div>
-  <div class="categories">
-    <button data-filter="رجالي">تيشيرتات رجالية</button><button data-filter="نسائي">تيشيرتات نسائية</button>
-    <button data-filter="أطفال">تيشيرتات أطفال</button><button data-filter="تصاميم">تصاميم مميزة</button>
-    <button data-filter="كاجوال">تيشيرتات كاجوال</button><button data-filter="هوديز">هوديز</button><button data-filter="إكسسوارات">إكسسوارات</button>
-  </div>
+<section class="container" id="categoriesSection">
+  <div class="section-head"><div><h2 id="categoriesTitle">تسوق حسب الفئة</h2><p id="categoriesSubtitle">اختار الستايل اللي يناسبك</p></div></div>
+  <div class="categories" id="categoryButtons"></div>
 </section>
 
-<section class="benefits container">
+<section class="benefits container" id="benefitsSection">
   <div>🚚 <b>شحن سريع</b><small>لجميع المحافظات</small></div>
-  <div>🛡️ <b>دفع آمن</b><small>وسائل دفع متعددة</small></div>
-  <div>↻ <b>استبدال واسترجاع</b><small>خلال 14 يوم</small></div>
   <div>♧ <b>دعم 24/7</b><small>نحن دائماً في خدمتك</small></div>
 </section>
 
-<section class="container" id="products">
-  <div class="section-head"><div><h2>أحدث المنتجات</h2><p>اختيارات جديدة كل أسبوع</p></div><a href="#products">عرض الكل ←</a></div>
+<section class="container" id="productsSection">
+  <div class="section-head"><div><h2 id="productsTitle">أحدث المنتجات</h2><p id="productsSubtitle">اختيارات جديدة كل أسبوع</p></div><a href="#products">عرض الكل ←</a></div>
   <div class="products" id="productGrid"></div>
 </section>
 
-<section class="social-banner" id="about">
-  <div><span>تابعنا على</span><strong>Instagram · TikTok · WhatsApp</strong><p>محتوى حصري، تصاميم جديدة وكواليس التصنيع</p></div>
+<section class="social-banner" id="socialSection">
+  <div><span id="socialTitle">تابعنا على</span><strong id="socialHeadline">Instagram · TikTok · WhatsApp</strong><p id="socialText">محتوى حصري، تصاميم جديدة وكواليس التصنيع</p></div>
   <div class="social-icons">
-    <a href="https://www.instagram.com/braven7117?stkn=MTlnc2VxcGY0OW10dA==" target="_blank" title="إنستغرام">◎</a>
-    <a href="https://www.tiktok.com/@braven9631?_r=1&_t=ZS-99qZ0NtZvTp" target="_blank" title="تيك توك">♪</a>
-    <a href="https://wa.me/201001648519" target="_blank" title="واتساب">✆</a>
-    <a href="mailto:braven.store6@gmail.com" title="البريد الإلكتروني">✉</a>
+    <a id="socialInstagram" href="https://www.instagram.com/braven7117" target="_blank" rel="noopener" title="إنستغرام">◎</a>
+    <a id="socialTiktok" href="https://www.tiktok.com/@braven9631" target="_blank" rel="noopener" title="تيك توك">♪</a>
+    <a id="socialWhatsapp" href="https://wa.me/201001648519" target="_blank" rel="noopener" title="واتساب">✆</a>
+    <a id="socialEmail" href="mailto:braven.store6@gmail.com" title="البريد الإلكتروني">✉</a>
   </div>
-  <a class="btn" href="https://www.instagram.com/braven7117?stkn=MTlnc2VxcGY0OW10dA==" target="_blank">تابعنا الآن</a>
+  <a id="socialButton" class="btn" href="https://www.instagram.com/braven7117" target="_blank" rel="noopener">تابعنا الآن</a>
 </section>
 
 <footer id="contact">
-  <div><a class="logo" href="index.html">♧ BRAVEN<small>Wear Your Style</small></a><p>متجر تيشيرتات عصري يهتم بالتفاصيل والجودة.</p></div>
+  <div><a class="logo" href="index.html">♧ <span data-brand-name>BRAVEN</span><small data-brand-tagline>Wear Your Style</small></a><p id="footerDescription">متجر تيشيرتات عصري يهتم بالتفاصيل والجودة.</p></div>
   <div><h3>روابط سريعة</h3><a href="index.html">الرئيسية</a><a href="#products">المنتجات</a><a href="account.html">حسابي</a><a href="cart.html">السلة</a></div>
-  <div><h3>معلومات مهمة</h3><a href="#">سياسة الخصوصية</a><a href="#">شروط الاستخدام</a><a href="#">الاستبدال والاسترجاع</a></div>
+  <div><h3>معلومات</h3><a href="#">سياسة الخصوصية</a><a href="#">شروط الاستخدام</a></div>
   <div>
     <h3>تواصل معنا</h3>
-    <a href="tel:+201001648519">01001648519</a>
-    <a href="https://wa.me/201001648519" target="_blank">واتساب</a>
-    <a href="https://www.instagram.com/braven7117?stkn=MTlnc2VxcGY0OW10dA==" target="_blank">إنستغرام</a>
-    <a href="https://www.tiktok.com/@braven9631?_r=1&_t=ZS-99qZ0NtZvTp" target="_blank">تيك توك</a>
-    <a href="mailto:braven.store6@gmail.com">braven.store6@gmail.com</a>
+    <a id="contactPhone" href="tel:+201001648519">01001648519</a>
+    <a id="contactWhatsapp" href="https://wa.me/201001648519" target="_blank" rel="noopener">واتساب</a>
+    <a id="contactInstagram" href="https://www.instagram.com/braven7117" target="_blank" rel="noopener">إنستغرام</a>
+    <a id="contactTiktok" href="https://www.tiktok.com/@braven9631" target="_blank" rel="noopener">تيك توك</a>
+    <a id="contactEmail" href="mailto:braven.store6@gmail.com">braven.store6@gmail.com</a>
   </div>
 </footer>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="config.js"></script>
+<script src="site-config.js"></script>
 <script src="app.js"></script>
+<script>
+(async()=>{const settings=await loadBravenSettings(window.bravenSupabase);applyBravenSettings(settings);})();
+</script>
 </body></html>
